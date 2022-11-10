@@ -11,6 +11,5 @@
     public string BlogUrl { get; set; }
     public string Twitter { get; set; }
     public string GitHub { get; set; }
-
   }
 }
