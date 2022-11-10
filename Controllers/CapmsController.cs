@@ -120,7 +120,8 @@ namespace CoreCodeCampApi.Controllers
 
                 if (existingCamp == null)  return NotFound($"Could not find camp with moniker of {moniker}");
 
-                mapper.Map(campModel, existingCamp);
+                var camp = mapper.Map(campModel, existingCamp);
+                campRepository.Add(camp);
 
                 if (await campRepository.SaveChangesAsync())
                 {
@@ -133,6 +134,30 @@ namespace CoreCodeCampApi.Controllers
             }
 
             return BadRequest();
+        }
+
+        [HttpDelete("{moniker}")]
+        public async Task<ActionResult<CampModel>> Delete(string moniker)
+        {
+            try
+            {
+                var camp = await campRepository.GetCampAsync(moniker);
+
+                if (camp == null) return NotFound($"Camp with moniker {moniker} has't existed yet");
+
+                campRepository.Delete(camp);
+
+                if (await campRepository.SaveChangesAsync())
+                {
+                    return Ok();
+                }
+            }
+            catch (Exception)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "DB connection failure");
+            }
+
+            return BadRequest("Fail to delete!");
         }
     }
 }
