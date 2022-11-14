@@ -108,7 +108,7 @@ namespace CoreCodeCampApi.Controllers
                 return this.StatusCode(StatusCodes.Status500InternalServerError, "DB connection failure");
             }
 
-            return BadRequest();
+            return BadRequest("Camp not added");
         }
 
         [HttpPut("{moniker}")]
@@ -133,7 +133,7 @@ namespace CoreCodeCampApi.Controllers
                 return this.StatusCode(StatusCodes.Status500InternalServerError, "DB connection failure");
             }
 
-            return BadRequest();
+            return BadRequest("Camp not updated");
         }
 
         [HttpDelete("{moniker}")]
