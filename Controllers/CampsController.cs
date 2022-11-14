@@ -12,13 +12,13 @@ namespace CoreCodeCampApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CapmsController : ControllerBase
+    public class CampsController : ControllerBase
     {
         private readonly ICampRepository campRepository;
         private readonly IMapper mapper;
         private readonly LinkGenerator linkGenerator;
 
-        public CapmsController(ICampRepository campRepository, IMapper mapper, LinkGenerator linkGenerator)
+        public CampsController(ICampRepository campRepository, IMapper mapper, LinkGenerator linkGenerator)
         {
             this.campRepository = campRepository;
             this.mapper = mapper;
@@ -39,6 +39,7 @@ namespace CoreCodeCampApi.Controllers
             }
         }
 
+        // api/camps/moiker/atl2018 where alt2018 is moniker
         [HttpGet("{moniker}")]       
         public async Task<ActionResult<CampModel>> Get(string moniker, bool includeTalks = false)
         {
@@ -56,7 +57,7 @@ namespace CoreCodeCampApi.Controllers
             }
         }
 
-        [HttpGet("{dateTime}")]
+        [HttpGet("search")]
         public async Task<ActionResult<CampModel>> SearchByDate(DateTime theDate, bool includeTalks = false)
         {
             try
@@ -70,10 +71,9 @@ namespace CoreCodeCampApi.Controllers
             catch (Exception)
             {
                 return this.StatusCode(StatusCodes.Status500InternalServerError, "DB connection failure");
-            }
+            } 
         }
-
-        [HttpPost]
+      
         public async Task<ActionResult<CampModel>> Post(CampModel campModel)
         {
             try
@@ -85,27 +85,27 @@ namespace CoreCodeCampApi.Controllers
                     return BadRequest("Moniker is already used");
                 }
 
-                var location = linkGenerator.GetPathByAction(
-                "GetCamps",
-                "Camps",
-                new { moniker = campModel.Moniker });
+                //var location = linkGenerator.GetPathByAction(
+                //"Get",
+                //"Camps",
+                //new { moniker = campModel.Moniker });
 
-                if (string.IsNullOrWhiteSpace(location))
-                {
-                    return BadRequest("Could not use current moniker");
-                }
+                //if (string.IsNullOrWhiteSpace(location))
+                //{
+                //    return BadRequest("Could not use current moniker");
+                //}
 
                 var camp = mapper.Map<Camp>(campModel);
                 campRepository.Add(camp);
 
-                if(await campRepository.SaveChangesAsync())
+                if (await campRepository.SaveChangesAsync())
                 {
                     return Created("", mapper.Map<Camp>(campModel));
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                return this.StatusCode(StatusCodes.Status500InternalServerError, "DB connection failure");
+                return this.StatusCode(StatusCodes.Status500InternalServerError, $"DB connection failure {e.Message}");
             }
 
             return BadRequest("Camp not added");
