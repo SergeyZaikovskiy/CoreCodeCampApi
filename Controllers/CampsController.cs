@@ -151,6 +151,10 @@ namespace CoreCodeCampApi.Controllers
                 {
                     return Ok();
                 }
+                else
+                {
+                    return BadRequest("Falied to delete camp");
+                }
             }
             catch (Exception)
             {
