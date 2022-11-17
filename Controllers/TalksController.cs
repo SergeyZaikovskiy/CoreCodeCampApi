@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace CoreCodeCampApi.Controllers
 {
-    [Route("api/camps/{moniker}/talks")]
+    [Route("api/camps/{moniker}/[controller]")]
     public class TalksController : ControllerBase
     {
         private readonly ICampRepository campRepository;
@@ -82,22 +82,25 @@ namespace CoreCodeCampApi.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult<TalkModel>> Put(string moniker, int id, TalkModel talkModel )
+        public async Task<ActionResult<TalkModel>> Put(string moniker, int id, [FromBody] TalkModel talkModel )
         {
+            if (!ModelState.IsValid)
+                return BadRequest("Not a valid model");
+
             try
             {
                 var talk = await campRepository.GetTalkByMonikerAsync(moniker, id);
-                if (talk == null) return NotFound();
+                if (talk == null) return NotFound("Couldn't find the talk");
 
                 mapper.Map(talkModel, talk);
 
-                if (talkModel.Speakers != null)
+                if (talkModel.Speaker != null)
                 {
-                    var speaker = await campRepository.GetSpeakerAsync(talkModel.Speakers.SpeakerId);
+                    var speaker = await campRepository.GetSpeakerAsync(talkModel.Speaker.SpeakerId);
                     
                     if (speaker != null)
                     {
-                        talk.Speaker= speaker;
+                        talk.Speaker = speaker;
                     }
                 }
 
@@ -107,7 +110,7 @@ namespace CoreCodeCampApi.Controllers
                 }
                 else
                 {
-                    return BadRequest("Failed to update talk");
+                    return BadRequest("Failed to update DB");
                 }
             }
             catch (Exception)
@@ -117,8 +120,11 @@ namespace CoreCodeCampApi.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Post(string moniker, TalkModel talkModel)
+        public async Task<ActionResult<TalkModel>> Post(string moniker, [FromBody]TalkModel talkModel)
         {
+            if (!ModelState.IsValid)
+                return BadRequest("Not a valid model");
+
             try
             {
                 var camp = await campRepository.GetCampAsync(moniker);
@@ -126,7 +132,12 @@ namespace CoreCodeCampApi.Controllers
 
                 var talk = mapper.Map<Talk>(talkModel);
                 talk.Camp = camp;
-                
+
+                if (talkModel.Speaker == null) return BadRequest("Speaker ID is required");
+                var speaker = await campRepository.GetSpeakerAsync(talkModel.Speaker.SpeakerId);
+                if(speaker == null) return NotFound("Speaker could not found");
+                talk.Speaker = speaker;
+
                 campRepository.Add(talk);
 
                 if (await campRepository.SaveChangesAsync())

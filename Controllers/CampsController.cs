@@ -79,6 +79,9 @@ namespace CoreCodeCampApi.Controllers
         [HttpPost]
         public async Task<ActionResult<CampModel>> Post(CampModel campModel)
         {
+            if (!ModelState.IsValid)
+                return BadRequest("Not a valid model");
+
             try
             {
                 var existingCamp = await campRepository.GetCampAsync(campModel.Moniker);
@@ -117,6 +120,9 @@ namespace CoreCodeCampApi.Controllers
         [HttpPut("{moniker}")]
         public async Task<ActionResult<CampModel>> Put(string moniker, CampModel campModel)
         {
+            if (!ModelState.IsValid)
+                return BadRequest("Not a valid model");
+
             try
             {
                 var existingCamp = await campRepository.GetCampAsync(campModel.Moniker);
