@@ -81,7 +81,7 @@ namespace CoreCodeCampApi.Controllers
             }
         }
 
-        [HttpPut("{id:int]")]
+        [HttpPut("{id:int}")]
         public async Task<ActionResult<TalkModel>> Put(string moniker, int id, TalkModel talkModel )
         {
             try
@@ -89,9 +89,9 @@ namespace CoreCodeCampApi.Controllers
                 var talk = await campRepository.GetTalkByMonikerAsync(moniker, id);
                 if (talk == null) return NotFound();
 
-                campRepository.Add(talk);
+                mapper.Map(talkModel, talk);
 
-                if(talkModel.Speakers != null)
+                if (talkModel.Speakers != null)
                 {
                     var speaker = await campRepository.GetSpeakerAsync(talkModel.Speakers.SpeakerId);
                     
@@ -122,25 +122,31 @@ namespace CoreCodeCampApi.Controllers
             try
             {
                 var camp = await campRepository.GetCampAsync(moniker);
-
                 if (camp == null) return BadRequest("Camp hasn't been existed yet");
 
                 var talk = mapper.Map<Talk>(talkModel);
-
+                talk.Camp = camp;
                 
                 campRepository.Add(talk);
 
                 if (await campRepository.SaveChangesAsync())
                 {
-                    return Created("", talk);
+                    var url = linkGenerator.GetPathByAction(
+                        HttpContext,
+                        "Get",
+                        values: new {moniker, id = talk.TalkId});
+
+                    return Created(url, mapper.Map<TalkModel>(talk));
+                }
+                else
+                {
+                    return BadRequest("Failed to save new Talk");
                 }
             }
             catch (Exception)
             {
                 return this.StatusCode(StatusCodes.Status500InternalServerError, "DB connection failure");
             }
-
-            return BadRequest("Talk not added");
         }
     }
 }
