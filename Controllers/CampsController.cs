@@ -10,7 +10,9 @@ using System.Threading.Tasks;
 
 namespace CoreCodeCampApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
+    [ApiVersion("1.0")]
+    [ApiVersion("1.1")]
     [ApiController]
     public class CampsController : ControllerBase
     {
@@ -41,8 +43,27 @@ namespace CoreCodeCampApi.Controllers
         }
 
         // api/camps/moiker/atl2018?includeTalks=false where alt2018 is moniker      
-        [HttpGet("{moniker}")]       
+        [HttpGet("{moniker}")]
+        [MapToApiVersion("1.0")]
         public async Task<ActionResult<CampModel>> Get(string moniker, bool includeTalks = false)
+        {
+            try
+            {
+                var camp = await campRepository.GetCampAsync(moniker, includeTalks);
+
+                if (camp == null) return NotFound();
+
+                return mapper.Map<CampModel>(camp);
+            }
+            catch (Exception)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "DB connection failure");
+            }
+        }
+
+        [HttpGet("{moniker}")]
+        [MapToApiVersion("1.1")]
+        public async Task<ActionResult<CampModel>> Get11(string moniker, bool includeTalks = false)
         {
             try
             {
